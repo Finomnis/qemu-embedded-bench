@@ -37,9 +37,15 @@ RUN --mount=type=bind,source=bench-plugin.c,target=/build/bench-plugin.c \
 #
 FROM ubuntu:$UBUNTU_VERSION
 
+LABEL org.opencontainers.image.source=https://github.com/Finomnis/qemu-embedded-bench
+
 # install dependencies
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --yes \
-    qemu-system-arm \
+    qemu-system-arm llvm \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY --from=plugin-build /build/bench-plugin.so /bench-plugin.so
+
+COPY run.sh /usr/bin/run.sh
+
+ENTRYPOINT ["/bin/bash", "/usr/bin/run.sh"]

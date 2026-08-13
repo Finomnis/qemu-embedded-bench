@@ -11,6 +11,7 @@ fn main() -> ! {
     let input_a = black_box(1);
     let input_b = black_box(2);
 
+    // Marks the start of the benchmark
     #[allow(named_asm_labels)]
     unsafe {
         core::arch::asm!(
@@ -22,6 +23,7 @@ fn main() -> ! {
 
     let result = run_benchmark(input_a, input_b);
 
+    // Marks the end of the benchmark
     #[allow(named_asm_labels)]
     unsafe {
         core::arch::asm!(
