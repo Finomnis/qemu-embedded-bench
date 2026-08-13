@@ -21,13 +21,17 @@ It must contain the asm labels `benchmark_begin` and `benchmark_end`; the measur
 between those two labels.
 
 Then, run the docker image with:
-   - the firmware elf file mounted at `/tmp/algo.firmware`
+   - the firmware elf file mounted at `/algo.firmware`
    - the machine type as the first argument
 
 Like so:
 
 ```
-docker run --rm --mount type=bind,src=<my-firmware-elf-file>,dst=/tmp/algo.firmware qemu-embedded-bench <qemu-machine-name>
+docker run \
+  --rm \
+  --mount type=bind,src=<my-firmware-elf-file>,dst=/algo.firmware \
+  ghcr.io/finomnis/qemu-embedded-bench:v0.2.0 \
+  <qemu-machine-name>
 ```
 
 Example output:
