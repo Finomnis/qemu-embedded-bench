@@ -1,0 +1,12 @@
+[package]
+name = "benchmark-example"
+version = "0.1.0"
+edition = "2024"
+
+publish = false
+
+[dependencies]
+cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }
+cortex-m-rt = "0.7.6"
+cortex-m-semihosting = "0.6.0"
+panic-semihosting = { version = "0.7.0", features = ["exit"] }
