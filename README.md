@@ -14,6 +14,10 @@ For reproducibility, the entire benchmark setup is built into a Docker image.
 
 This makes sure that qemu and plugin version are constant and reproducible.
 
+## Warning
+
+This is a synthetic benchmark that only counts instructions and memory accesses. It does not take into account the fact that instructions may take a variable amount of time, or that memory performance strongly depends on caching. So take the results with a grain of salt; they are primarily meant to analyze on an algorithm level, they are not suitable for microoptimizations like cache striding or similar.
+
 ## Usage
 
 The firmware needs to be compiled with semihosting enabled and must report success/error via semihosting.
