@@ -34,7 +34,7 @@ Like so:
 docker run \
   --rm \
   --mount type=bind,src=<my-firmware-elf-file>,dst=/algo.firmware \
-  ghcr.io/finomnis/qemu-embedded-bench:v0.2.0 \
+  ghcr.io/finomnis/qemu-embedded-bench:v0.3.0 \
   <qemu-machine-name>
 ```
 
