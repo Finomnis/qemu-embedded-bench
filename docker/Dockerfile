@@ -17,9 +17,9 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --yes \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # build the plugin
-RUN --mount=type=bind,source=bench-plugin.c,target=/build/bench-plugin.c \
-    gcc \
-    -std=c11 \
+RUN --mount=type=bind,source=bench-plugin.cpp,target=/build/bench-plugin.cpp \
+    g++ \
+    -std=c++20 \
     -O2 \
     -Wall \
     -Wextra \
@@ -28,7 +28,7 @@ RUN --mount=type=bind,source=bench-plugin.c,target=/build/bench-plugin.c \
     -fvisibility=hidden \
     $(pkg-config --cflags glib-2.0) \
     -I /build/qemu-*+ds/include/qemu \
-    /build/bench-plugin.c \
+    /build/bench-plugin.cpp \
     -o /build/bench-plugin.so
 
 

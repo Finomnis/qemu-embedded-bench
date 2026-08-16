@@ -1,4 +1,7 @@
+extern "C"
+{
 #include <qemu-plugin.h>
+}
 
 #include <inttypes.h>
 #include <stdbool.h>
