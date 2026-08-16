@@ -34,7 +34,7 @@ Like so:
 docker run \
   --rm \
   --mount type=bind,src=<my-firmware-elf-file>,dst=/algo.firmware \
-  ghcr.io/finomnis/qemu-embedded-bench:v0.3.0 \
+  ghcr.io/finomnis/qemu-embedded-bench:v0.4.0 \
   <qemu-machine-name>
 ```
 
@@ -62,7 +62,7 @@ The benchmark also supports a full trace mode, which can be enabled using the `-
 docker run \
   --rm \
   --mount type=bind,src=<my-firmware-elf-file>,dst=/algo.firmware \
-  ghcr.io/finomnis/qemu-embedded-bench:v0.3.0 \
+  ghcr.io/finomnis/qemu-embedded-bench:v0.4.0 \
   <qemu-machine-name> \
   --trace
 ```

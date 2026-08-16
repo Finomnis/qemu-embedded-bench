@@ -12,12 +12,12 @@ echo "=== Cortex-M0 ==="
 docker run \
   --rm \
   --mount type=bind,src=./target/thumbv6m-none-eabi/release/dummy,dst=/algo.firmware \
-  ghcr.io/finomnis/qemu-embedded-bench:v0.3.0 \
+  ghcr.io/finomnis/qemu-embedded-bench:v0.4.0 \
   microbit
 
 echo "=== Cortex-M4 ==="
 docker run \
   --rm \
   --mount type=bind,src=./target/thumbv7em-none-eabi/release/dummy,dst=/algo.firmware \
-  ghcr.io/finomnis/qemu-embedded-bench:v0.3.0 \
+  ghcr.io/finomnis/qemu-embedded-bench:v0.4.0 \
   mps2-an386
