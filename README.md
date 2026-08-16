@@ -68,4 +68,4 @@ docker run \
 ```
 
 This disables printing the json result and instead prints a newline separated list of instruction addresses the program went through,
-interspersed with the strings `r` and `w`, representing read/write memory.
+interspersed with the strings `r` and `w`, representing memory read/write.
