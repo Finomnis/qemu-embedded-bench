@@ -23,6 +23,7 @@ RUN --mount=type=bind,source=bench-plugin.cpp,target=/build/bench-plugin.cpp \
     -O2 \
     -Wall \
     -Wextra \
+    -Werror \
     -shared \
     -fPIC \
     -fvisibility=hidden \

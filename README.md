@@ -53,3 +53,19 @@ As a sanity check, make sure `regions_started` and `regions_completed` are alway
 were not executed or they were executed multiple times.
 
 For a complete usage example, see the `example` subdirectory, specifically `example/benchmark.sh`.
+
+## Tracing
+
+The benchmark also supports a full trace mode, which can be enabled using the `--trace` option, like:
+
+```
+docker run \
+  --rm \
+  --mount type=bind,src=<my-firmware-elf-file>,dst=/algo.firmware \
+  ghcr.io/finomnis/qemu-embedded-bench:v0.3.0 \
+  <qemu-machine-name> \
+  --trace
+```
+
+This disables printing the json result and instead prints a newline separated list of instruction addresses the program went through,
+interspersed with the strings `r` and `w`, representing read/write memory.

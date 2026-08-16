@@ -3,32 +3,45 @@ extern "C"
 #include <qemu-plugin.h>
 }
 
-#include <inttypes.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cinttypes>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
 
 QEMU_PLUGIN_EXPORT int qemu_plugin_version = QEMU_PLUGIN_VERSION;
 
-static uint64_t start_addr;
-static uint64_t end_addr;
+struct State
+{
+    uint64_t start_addr = 0;
+    uint64_t end_addr = 0;
 
-static bool active;
-static uint64_t regions_started;
-static uint64_t regions_completed;
+    bool active = false;
+    uint64_t regions_started = 0;
+    uint64_t regions_completed = 0;
 
-static uint64_t instructions;
-static uint64_t reads;
-static uint64_t writes;
+    uint64_t instructions = 0;
+    uint64_t reads = 0;
+    uint64_t writes = 0;
+
+    bool full_trace = false;
+
+    std::vector<uint64_t> trace = {};
+};
+
+static State *state = nullptr;
+
+const uint64_t TRACE_ENTRY_MEM_WRITE = (uint64_t)-2;
+const uint64_t TRACE_ENTRY_MEM_READ = (uint64_t)-3;
 
 /*
  * Called immediately before an instrumented guest instruction executes.
  *
  * userdata contains that instruction's guest PC.
  */
-static void on_instruction(unsigned int vcpu_index, void *userdata)
+static void
+on_instruction(unsigned int vcpu_index, void *userdata)
 {
     (void)vcpu_index;
 
@@ -37,21 +50,26 @@ static void on_instruction(unsigned int vcpu_index, void *userdata)
     /*
      * The marker instructions themselves are deliberately not counted.
      */
-    if (pc == start_addr)
+    if (pc == state->start_addr)
     {
-        active = true;
-        regions_started++;
+        state->active = true;
+        state->regions_started++;
     }
 
-    if (pc == end_addr)
+    if (pc == state->end_addr)
     {
-        active = false;
-        regions_completed++;
+        state->active = false;
+        state->regions_completed++;
     }
 
-    if (active)
+    if (state->active)
     {
-        instructions++;
+        state->instructions++;
+
+        if (state->full_trace)
+        {
+            state->trace.push_back(pc);
+        }
     }
 }
 
@@ -70,18 +88,28 @@ static void on_memory(unsigned int vcpu_index,
     (void)vaddr;
     (void)userdata;
 
-    if (!active)
+    if (!state->active)
     {
         return;
     }
 
     if (qemu_plugin_mem_is_store(info))
     {
-        writes++;
+        state->writes++;
+
+        if (state->full_trace)
+        {
+            state->trace.push_back(TRACE_ENTRY_MEM_WRITE);
+        }
     }
     else
     {
-        reads++;
+        state->reads++;
+
+        if (state->full_trace)
+        {
+            state->trace.push_back(TRACE_ENTRY_MEM_READ);
+        }
     }
 }
 
@@ -127,23 +155,48 @@ static void on_exit(qemu_plugin_id_t id, void *userdata)
 
     char output[512];
 
-    snprintf(
-        output,
-        sizeof(output),
-        "{\n"
-        "  \"regions_started\": %" PRIu64 ",\n"
-        "  \"regions_completed\": %" PRIu64 ",\n"
-        "  \"instructions\": %" PRIu64 ",\n"
-        "  \"reads\": %" PRIu64 ",\n"
-        "  \"writes\": %" PRIu64 "\n"
-        "}\n",
-        regions_started,
-        regions_completed,
-        instructions,
-        reads,
-        writes);
+    if (state->full_trace)
+    {
+        for (const auto pc : state->trace)
+        {
+            if (pc == TRACE_ENTRY_MEM_READ)
+            {
+                qemu_plugin_outs("r\n");
+            }
+            else if (pc == TRACE_ENTRY_MEM_WRITE)
+            {
+                qemu_plugin_outs("w\n");
+            }
+            else
+            {
+                snprintf(output, sizeof(output), "0x%" PRIx64 "\n", pc);
+                qemu_plugin_outs(output);
+            }
+        }
+    }
+    else
+    {
+        snprintf(
+            output,
+            sizeof(output),
+            "{\n"
+            "  \"regions_started\": %" PRIu64 ",\n"
+            "  \"regions_completed\": %" PRIu64 ",\n"
+            "  \"instructions\": %" PRIu64 ",\n"
+            "  \"reads\": %" PRIu64 ",\n"
+            "  \"writes\": %" PRIu64 "\n"
+            "}\n",
+            state->regions_started,
+            state->regions_completed,
+            state->instructions,
+            state->reads,
+            state->writes);
 
-    qemu_plugin_outs(output);
+        qemu_plugin_outs(output);
+    }
+
+    delete state;
+    state = nullptr;
 }
 
 static bool parse_address(const char *arg,
@@ -173,24 +226,37 @@ static bool parse_address(const char *arg,
     return true;
 }
 
+static bool parse_option(const char *arg,
+                         const char *name)
+{
+    size_t name_len = strlen(name);
+    return strncmp(arg, name, name_len) == 0;
+}
+
 QEMU_PLUGIN_EXPORT
 int qemu_plugin_install(qemu_plugin_id_t id,
                         const qemu_info_t *info,
                         int argc,
                         char **argv)
 {
+    state = new State;
+
     bool have_start = false;
     bool have_end = false;
 
     for (int i = 0; i < argc; i++)
     {
-        if (parse_address(argv[i], "start", &start_addr))
+        if (parse_address(argv[i], "start", &(state->start_addr)))
         {
             have_start = true;
         }
-        else if (parse_address(argv[i], "end", &end_addr))
+        else if (parse_address(argv[i], "end", &(state->end_addr)))
         {
             have_end = true;
+        }
+        else if (parse_option(argv[i], "trace"))
+        {
+            state->full_trace = true;
         }
         else
         {
@@ -216,8 +282,8 @@ int qemu_plugin_install(qemu_plugin_id_t id,
      */
     if (strcmp(info->target_name, "arm") == 0)
     {
-        start_addr &= ~UINT64_C(1);
-        end_addr &= ~UINT64_C(1);
+        state->start_addr &= ~UINT64_C(1);
+        state->end_addr &= ~UINT64_C(1);
     }
 
     qemu_plugin_register_vcpu_tb_trans_cb(

@@ -13,4 +13,8 @@ BENCHMARK_END=$(
     awk '$3 == "benchmark_end" { print "0x" $1 }'
 )
 
-qemu-system-arm -M "$MACHINE" -nographic -semihosting -kernel /algo.firmware -d plugin -D /dev/stdout -plugin /bench-plugin.so,start=$BENCHMARK_BEGIN,end=$BENCHMARK_END
+if [[ ${2-} == "--trace" ]]; then
+    qemu-system-arm -M "$MACHINE" -nographic -semihosting -kernel /algo.firmware -d plugin -D /dev/stdout -plugin /bench-plugin.so,start=$BENCHMARK_BEGIN,end=$BENCHMARK_END,trace=on
+else
+    qemu-system-arm -M "$MACHINE" -nographic -semihosting -kernel /algo.firmware -d plugin -D /dev/stdout -plugin /bench-plugin.so,start=$BENCHMARK_BEGIN,end=$BENCHMARK_END
+fi
